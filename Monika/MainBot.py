@@ -74,13 +74,14 @@ async def on_message(message):
 				msg+= server.name+'\t'+server.id
 				msg+='\n'
 			await client.send_message(message.channel, msg)
-		if message.content.startswith('!kill'):
+		elif message.content.startswith('!kill'):
 			await client.send_message(message.channel, 'Goodbye!')
 			client.logout()
 			client.close()
 			sys.exit()
 
-		
+		elif message.content.startswith('!modroles'):
+			print(modRoles)
 
 
 
@@ -94,6 +95,9 @@ async def on_message(message):
 			await client.send_message(message.channel, 'Invalid Permissions')	
 		
 
+
+
+	#Admin only commands
 	elif message.content.startswith('!setmodrole'):
 		if message.channel.permissions_for(auth).administrator:
 			roles=message.role_mentions
@@ -106,8 +110,8 @@ async def on_message(message):
 
 					with open('ModRoles.txt','w') as modRolesFile:
 						for line in lines:
-							if not line.startswith(message.server.id):
-								modRolesFile.write(line)
+							if not line.startswith(message.server.id) and len(line.split())==2:
+								modRolesFile.write(line+'\n')
 
 					await client.send_message(message.channel, 'Mod role cleared')
 
@@ -115,7 +119,7 @@ async def on_message(message):
 					await client.send_message(message.channel, 'No role mentioned!')
 			else:
 				with open('ModRoles.txt','a') as modRolesFile:
-						modRolesFile.write(message.server.id+' '+roles[0].id)
+						modRolesFile.write(message.server.id+' '+roles[0].id+'\n')
 
 				await client.send_message(message.channel, 'Mod role set to '+roles[0].name)
 				modRoles[message.server]=roles[0]
