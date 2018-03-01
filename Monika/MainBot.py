@@ -23,10 +23,12 @@ SAFE = '408832439318741004'
 
 
 
-#Dictionaries for commands
 
 #This dictionary stores all the mod roles for the servers the bot is in
 modRoles={}
+
+#This dictionary is for the list of roles any user can assign to themselves
+freeRoles={}
 
 
 global chanNames
@@ -87,46 +89,76 @@ async def modroles(ctx):
 ###################################
 #		Mod commands
 
+
+
+@bot.command(pass_context=True)
+async def addFree(ctx,role : discord.Role):
+	if ctx.message.channel.permissions_for(ctx.message.author).administrator:
+		if not ctx.message.server in freeRoles:
+			freeRoles[ctx.message.server]={}
+			await bot.say('Created list')
+		freeRoles[ctx.message.server][role.name.lower()]=role
+		await bot.say('Added '+ role.name)
+		print(freeRoles)
+
+
+
+@bot.command(pass_context=True)
+async def join(ctx):
+	if not ctx.message.server in freeRoles:
+		await bot.say("No free roles setup!")
+		return None
+	word=ctx.message.content.lower().split()[1]
+	print(word)
+	if word in freeRoles[ctx.message.server]:
+		await bot.add_roles(ctx.message.author,freeRoles[ctx.message.server][word],ctx.message.channel)
+		await bot.say(ctx.message.author.name+ ' added to '+freeRoles[ctx.message.server][word].name)
+
+	else:
+		await bot.say('Couldnt find that role!')
+
+
+
+
+
 @bot.command(pass_context=True)
 async def purge(ctx,num : int):
-	if num==None or num>50:
-		bot.purge_from(channel=ctx.message.channel, limit=50)
-	else:
-		bot.purge_from(channel=ctx.message.channel,limit=num)
+	if message.channel.permissions_for(ctx.message.author).manage_messages:
 
+		if num==None or num>50:
+			bot.purge_from(channel=ctx.message.channel, limit=50)
+		else:
+			bot.purge_from(channel=ctx.message.channel,limit=num)
 
 @bot.command(pass_context=True)
 async def setmodrole(ctx, role : discord.Role):
 	message=ctx.message
 	if message.channel.permissions_for(message.author).administrator:
-		roles=message.role_mentions
-		if len(roles)==0:
-			if message.server in modRoles:
-				
-				del(modRoles[message.server])
-				with open('ModRoles.txt','r') as modRolesFile:
-					lines=modRolesFile.read()
-
-				with open('ModRoles.txt','w') as modRolesFile:
-					for line in lines:
-						if not line.startswith(message.server.id) and len(line.split())==2:
-							modRolesFile.write(line+'\n')
-
-				await bot.say( 'Mod role cleared')
-
-			else:
-				await bot.say( 'No role mentioned!')
+		roles=list(message.content)
+		if len(roles)<2:
+			await bot.say( 'No role mentioned!')
 		else:
-			with open('ModRoles.txt','a') as modRolesFile:
-					modRolesFile.write(message.server.id+' '+roles[0].id+'\n')
-
-			await bot.say( 'Mod role set to '+roles[0].name)
-			modRoles[message.server]=roles[0]
+			if message.server in modRoles:
+				await bot.say('Mod role is already set!\nUse (!setmodrole) with no argument to reset it' )
+			else:
+				WriteLine(message,'ModRoles.txt',role.id)
+				await bot.say( 'Mod role set to '+role.name)
+				modRoles[message.server]=role
 	else:
 		await bot.say( 'Invalid Permissions')
 
 
 
+@bot.command(pass_context=True)
+async def resetmod(ctx):
+	message=ctx.message
+	if message.channel.permissions_for(message.author).administrator:
+		del(modRoles[message.server])
+		DeleteLine(message,'ModRoles.txt')
+		await bot.say( 'Mod role cleared')
+
+
+ 
 @bot.command(pass_context=True)
 async def mod(ctx,member : discord.Member):
 	message=ctx.message
@@ -162,6 +194,7 @@ async def demod(ctx,member : discord.Member):
 
 ######################################
 #		Regular Commands
+
 
 
 @bot.command()
@@ -205,6 +238,25 @@ async def removeRoles(mems,roles,chan):
 				await bot.remove_roles(m,r)
 		await bot.say(chan,'Roles have been revoked!')
 		print(chan.server)
+
+
+
+def WriteLine(msg, fileName,ln):
+	with open(fileName,'a') as file:
+		file.write(msg.server.id+' '+ln+'\n')
+	file.close()
+
+
+def DeleteLine(msg,fileName):
+	with open(fileName,'r+') as file:
+		lines=file.readlines()
+		file.seek(0)
+		for line in lines:
+			if not line.startswith(msg.server.id):
+				file.write(line)
+
+		file.truncate()
+		file.close()
 
 #bot.run('email','pass')
 #bot.close()
