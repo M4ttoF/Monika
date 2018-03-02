@@ -5,11 +5,11 @@ import asyncio
 import random
 import os
 import sys
-from riotwatcher import RiotWatcher
+#from riotwatcher import RiotWatcher
 
 bot=commands.Bot(command_prefix='!',description='This is a bot made by Matto')
 
-watcher = RiotWatcher('RGAPI-8b67a641-0366-4c60-8a91-73a07d8764f3')
+#watcher = RiotWatcher('RGAPI-8b67a641-0366-4c60-8a91-73a07d8764f3')
 
 
 ADMIN = '131987304930738177'	        #my discord ID
@@ -84,6 +84,11 @@ async def servers(ctx):
 async def modroles(ctx):
 	if ctx.message.author.id==ADMIN:
 		print(modRoles)
+@bot.command(pass_context=True)
+async def say(ctx):
+	if ctx.message.author.id==ADMIN:
+		await bot.purge_from(channel=ctx.message.channel,limit=1)
+		await bot.say(ctx.message.content[4:])
 
 
 ###################################
@@ -108,10 +113,10 @@ async def join(ctx):
 	if not ctx.message.server in freeRoles:
 		await bot.say("No free roles setup!")
 		return None
-	word=ctx.message.content.lower().split()[1]
+	word=ctx.message.content.lower()[6:]
 	print(word)
 	if word in freeRoles[ctx.message.server]:
-		await bot.add_roles(ctx.message.author,freeRoles[ctx.message.server][word],ctx.message.channel)
+		await bot.add_roles(ctx.message.author,freeRoles[ctx.message.server][word])
 		await bot.say(ctx.message.author.name+ ' added to '+freeRoles[ctx.message.server][word].name)
 
 	else:
@@ -123,12 +128,12 @@ async def join(ctx):
 
 @bot.command(pass_context=True)
 async def purge(ctx,num : int):
-	if message.channel.permissions_for(ctx.message.author).manage_messages:
+	if ctx.message.channel.permissions_for(ctx.message.author).manage_messages:
 
 		if num==None or num>50:
-			bot.purge_from(channel=ctx.message.channel, limit=50)
+			await bot.purge_from(channel=ctx.message.channel, limit=50)
 		else:
-			bot.purge_from(channel=ctx.message.channel,limit=num)
+			await bot.purge_from(channel=ctx.message.channel,limit=num)
 
 @bot.command(pass_context=True)
 async def setmodrole(ctx, role : discord.Role):
